@@ -1,0 +1,12 @@
+{
+  "name": "checklist-generator",
+  "version": "1.0.0",
+  "description": "Sinh checklist/manual test case tự động bằng AI",
+  "main": "checklist-generator.js",
+  "author": "Tên của bạn",
+  "license": "MIT",
+  "dependencies": {
+    "openai": "^4.0.0",
+    "xlsx": "^0.18.0"
+  }
+}

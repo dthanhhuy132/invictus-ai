@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migration Map - Step 1</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h1 class="card-title mb-0">Migration Map (Step 1)</h1>
+              <button class="btn btn-outline-secondary btn-sm" id="setApiKeyBtn">Set OpenAI API Key</button>
+            </div>
+            <a href="/" class="btn btn-link mb-3">&larr; Back về trang chủ</a>
+            <form id="migrationForm">
+              <div class="mb-3">
+                <label class="form-label">Source Directory (trên server):</label>
+                <div class="input-group">
+                  <input type="text" name="sourceDir" id="sourceDirInput" class="form-control" required
+                    placeholder="VD: example/src">
+                  <button type="button" class="btn btn-outline-secondary" id="chooseFolderBtn">Chọn</button>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Source Language:</label>
+                <select name="from" class="form-select">
+                  <option value="php">PHP</option>
+                  <option value="java">Java</option>
+                  <option value="python">Python</option>
+                  <option value="nodejs">Node.js</option>
+                  <option value="csharp">C#</option>
+                  <option value="ruby">Ruby</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Target Language:</label>
+                <select name="to" class="form-select">
+                  <option value="nodejs">Node.js</option>
+                  <option value="php">PHP</option>
+                  <option value="java">Java</option>
+                  <option value="python">Python</option>
+                  <option value="csharp">C#</option>
+                  <option value="ruby">Ruby</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Output PDF file (server path, optional):</label>
+                <input type="text" name="pdf" class="form-control" value="example/result/migration-map.pdf">
+              </div>
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">Generate Migration Map</button>
+              </div>
+            </form>
+            <!-- Progress bar -->
+            <div class="progress mt-3" id="progressBarContainer" style="display:none;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" style="width: 100%">
+                Đang xử lý...</div>
+            </div>
+            <div class="result mt-4" id="result"></div>
+            <div class="download-links mt-2" id="downloadLinks"></div>
+            <div class="error mt-3" id="error"></div>
+            <div class="d-flex justify-content-between mt-4">
+              <a href="/" class="btn btn-secondary">&larr; Back</a>
+              <a href="/qa_test" class="btn btn-success">Next &rarr; QA Checklist</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal for API Key -->
+  <div class="modal fade" id="apiKeyModal" tabindex="-1" aria-labelledby="apiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="apiKeyModalLabel">Set OpenAI API Key</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="password" id="apiKeyInput" class="form-control" placeholder="sk-..." autocomplete="off">
+          <div class="form-text">API key sẽ được lưu trên trình duyệt của bạn (localStorage).</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="saveApiKeyBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal chọn folder -->
+  <div class="modal fade" id="folderModal" tabindex="-1" aria-labelledby="folderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="folderModalLabel">Chọn folder source</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Thư mục gốc:</label>
+            <input type="text" id="rootFolderInput" class="form-control" value="example/">
+          </div>
+          <ul class="list-group" id="folderList"></ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const setApiKeyBtn = document.getElementById('setApiKeyBtn');
+    const apiKeyModal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+    setApiKeyBtn.onclick = () => {
+      apiKeyInput.value = localStorage.getItem('openai_api_key') || '';
+      apiKeyModal.show();
+    };
+    saveApiKeyBtn.onclick = () => {
+      localStorage.setItem('openai_api_key', apiKeyInput.value.trim());
+      apiKeyModal.hide();
+    };
+    const chooseFolderBtn = document.getElementById('chooseFolderBtn');
+    const folderModal = new bootstrap.Modal(document.getElementById('folderModal'));
+    const folderList = document.getElementById('folderList');
+    const rootFolderInput = document.getElementById('rootFolderInput');
+    const sourceDirInput = document.getElementById('sourceDirInput');
+    chooseFolderBtn.onclick = () => {
+      loadFolderList(rootFolderInput.value);
+      folderModal.show();
+    };
+    rootFolderInput.onchange = () => loadFolderList(rootFolderInput.value);
+    async function loadFolderList(root) {
+      folderList.innerHTML = '<li class="list-group-item">Đang tải...</li>';
+      try {
+        const res = await fetch(`/api/list-folders?root=${encodeURIComponent(root)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Lỗi không xác định');
+        folderList.innerHTML = '';
+        if (!data.folders.length) {
+          folderList.innerHTML = '<li class="list-group-item">Không có thư mục con.</li>';
+        }
+        for (const folder of data.folders) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item list-group-item-action';
+          li.textContent = folder;
+          li.onclick = () => {
+            const newRoot = root.replace(/\/$/, '') + '/' + folder;
+            // Nếu muốn chọn folder này, click lần nữa
+            li.onclick = () => {
+              sourceDirInput.value = newRoot;
+              folderModal.hide();
+            };
+            // Hoặc click để vào sâu hơn
+            loadFolderList(newRoot);
+          };
+          folderList.appendChild(li);
+        }
+      } catch (err) {
+        folderList.innerHTML = `<li class='list-group-item text-danger'>${err.message}</li>`;
+      }
+    }
+    const form = document.getElementById('migrationForm');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    const downloadLinks = document.getElementById('downloadLinks');
+    const progressBarContainer = document.getElementById('progressBarContainer');
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      resultDiv.textContent = '';
+      errorDiv.textContent = '';
+      downloadLinks.innerHTML = '';
+      progressBarContainer.style.display = '';
+      try {
+        const data = Object.fromEntries(new FormData(form));
+        const headers = { 'Content-Type': 'application/json' };
+        const apiKey = localStorage.getItem('openai_api_key');
+        if (apiKey) headers['x-openai-api-key'] = apiKey;
+        const res = await fetch('/migration_map', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        progressBarContainer.style.display = 'none';
+        if (!res.ok) {
+          errorDiv.innerHTML = `<div class='alert alert-danger'>${json.error || 'Unknown error'}</div>`;
+          return;
+        }
+        // Hiển thị kết quả trực tiếp
+        resultDiv.innerHTML = '<h3>Kết quả Migration Map (JSON):</h3>' +
+          '<pre class="bg-dark text-light p-3 rounded">' + JSON.stringify(json.results, null, 2) + '</pre>';
+        // Link download nếu có file
+        if (json.output) {
+          downloadLinks.innerHTML += `<a class="btn btn-success me-2" href="/${json.output}" download>Download JSON</a>`;
+        }
+        if (json.pdf) {
+          downloadLinks.innerHTML += `<a class="btn btn-warning" href="/${json.pdf}" download>Download PDF</a>`;
+        }
+      } catch (err) {
+        progressBarContainer.style.display = 'none';
+        errorDiv.innerHTML = `<div class='alert alert-danger'>${err.message}</div>`;
+      }
+    };
+  </script>
+</body>
+
+</html>

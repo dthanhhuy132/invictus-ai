@@ -1,0 +1,8 @@
+{
+  "name": "migration-map",
+  "version": "1.0.0",
+  "description": "Thư viện sinh migration map tự động cho project",
+  "main": "migration-map.js",
+  "author": "Tên của bạn",
+  "license": "MIT"
+}

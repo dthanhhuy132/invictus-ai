@@ -1,0 +1,42 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm/
+
+# Output
+/dist/
+/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+
+# VSCode
+.vscode/
+
+# Result/output
+example/result/
+uploads/
+
+# Package lock
+package-lock.json
+
+# Misc
+*.tgz
+.idea/
+*.swp 

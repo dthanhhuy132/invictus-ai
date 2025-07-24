@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "checklist-generator": "file:checklist-generator-1.0.0.tgz",
+    "express": "^5.1.0",
+    "migration-map": "file:migration-map-1.0.0.tgz",
+    "multer": "^2.0.2"
+  }
+}
