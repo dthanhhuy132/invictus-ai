@@ -4,149 +4,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Migration Map Web UI</title>
+  <title>AI Migration Map & Checklist</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%);
+      min-height: 100vh;
+    }
+
+    .hero-icon {
+      font-size: 3.5rem;
+      color: #6366f1;
+      margin-bottom: 0.5rem;
+    }
+
+    .main-card {
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+      border: none;
+    }
+
+    .main-btn {
+      font-size: 1.2rem;
+      padding: 0.75rem 2.5rem;
+      border-radius: 2rem;
+    }
+
+    .step-label {
+      font-weight: 600;
+      color: #6366f1;
+      letter-spacing: 1px;
+      font-size: 1.1rem;
+    }
+
+    .footer-credit {
+      font-size: 0.95rem;
+      color: #888;
+      margin-top: 2.5rem;
+      text-align: center;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 
-<body class="bg-light">
+<body>
   <div class="container py-5">
     <div class="row justify-content-center">
-      <div class="col-lg-8 col-md-10">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h1 class="card-title mb-0">Migration Map Generator</h1>
-              <button class="btn btn-outline-secondary btn-sm" id="setApiKeyBtn">Set API Key</button>
+      <div class="col-lg-7 col-md-10">
+        <div class="card main-card p-4">
+          <div class="text-center">
+            <div class="hero-icon">
+              <i class="fa-solid fa-brain"></i>
             </div>
-            <form id="migrationForm">
-              <div class="mb-3">
-                <label class="form-label">Source Directory (trên server):</label>
-                <input type="text" name="sourceDir" class="form-control" required placeholder="VD: example/src">
+            <h1 class="display-5 fw-bold mb-2">AI Migration Map & Checklist</h1>
+            <p class="lead mb-4">Tăng tốc chuyển đổi & kiểm thử dự án với sức mạnh AI. Giao diện hiện đại, thao tác cực
+              nhanh, kết quả trực quan.</p>
+          </div>
+          <div class="row g-4 mt-2 mb-3">
+            <div class="col-md-6">
+              <div
+                class="border rounded-4 h-100 p-3 bg-light d-flex flex-column align-items-center justify-content-between">
+                <div class="step-label mb-2"><i class="fa-solid fa-diagram-project me-2"></i>Bước 1</div>
+                <div class="mb-3 text-center">Phân tích, lập kế hoạch chuyển đổi dự án giữa các ngôn ngữ. Xuất file
+                  JSON, PDF, review trực tiếp.</div>
+                <a href="/migration_map" class="btn btn-primary main-btn w-100"><i
+                    class="fa-solid fa-arrow-right-to-bracket me-2"></i>Migration Map</a>
               </div>
-              <div class="mb-3">
-                <label class="form-label">Source Language:</label>
-                <select name="from" class="form-select">
-                  <option value="php">PHP</option>
-                  <option value="java">Java</option>
-                  <option value="python">Python</option>
-                  <option value="nodejs">Node.js</option>
-                  <option value="csharp">C#</option>
-                  <option value="ruby">Ruby</option>
-                </select>
+            </div>
+            <div class="col-md-6">
+              <div
+                class="border rounded-4 h-100 p-3 bg-light d-flex flex-column align-items-center justify-content-between">
+                <div class="step-label mb-2"><i class="fa-solid fa-clipboard-check me-2"></i>Bước 2</div>
+                <div class="mb-3 text-center">Sinh checklist kiểm thử tự động (QA) bằng AI. Xuất file Excel, PDF, review
+                  trực tiếp.</div>
+                <a href="/qa_test" class="btn btn-success main-btn w-100"><i
+                    class="fa-solid fa-list-check me-2"></i>Checklist AI Test</a>
               </div>
-              <div class="mb-3">
-                <label class="form-label">Target Language:</label>
-                <select name="to" class="form-select">
-                  <option value="nodejs">Node.js</option>
-                  <option value="php">PHP</option>
-                  <option value="java">Java</option>
-                  <option value="python">Python</option>
-                  <option value="csharp">C#</option>
-                  <option value="ruby">Ruby</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Output JSON file (server path):</label>
-                <input type="text" name="output" class="form-control" value="example/result/migration-map.json">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Output PDF file (server path, optional):</label>
-                <input type="text" name="pdf" class="form-control" value="example/result/migration-map.pdf">
-              </div>
-              <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">Generate Migration Map</button>
-              </div>
-            </form>
-            <div class="result mt-4" id="result"></div>
-            <div class="download-links mt-2" id="downloadLinks"></div>
-            <div class="error mt-3" id="error"></div>
+            </div>
+          </div>
+          <div class="footer-credit">
+            <i class="fa-regular fa-lightbulb me-1"></i> Made with <span style="color:#6366f1">AI</span> & <span
+              style="color:#10b981">2025</span> &mdash; <a href="https://github.com/" target="_blank"
+              style="color:#6366f1;text-decoration:underline">Your Team</a>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- Modal for API Key -->
-  <div class="modal fade" id="apiKeyModal" tabindex="-1" aria-labelledby="apiKeyModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="apiKeyModalLabel">Set OpenAI API Key</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <input type="password" id="apiKeyInput" class="form-control" placeholder="sk-..." autocomplete="off">
-          <div class="form-text">API key sẽ được lưu trên trình duyệt của bạn (localStorage).</div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="saveApiKeyBtn">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const form = document.getElementById('migrationForm');
-    const resultDiv = document.getElementById('result');
-    const errorDiv = document.getElementById('error');
-    const downloadLinks = document.getElementById('downloadLinks');
-    const setApiKeyBtn = document.getElementById('setApiKeyBtn');
-    const apiKeyModal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
-
-    setApiKeyBtn.onclick = () => {
-      apiKeyInput.value = localStorage.getItem('openai_api_key') || '';
-      apiKeyModal.show();
-    };
-    saveApiKeyBtn.onclick = () => {
-      localStorage.setItem('openai_api_key', apiKeyInput.value.trim());
-      apiKeyModal.hide();
-    };
-
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      resultDiv.textContent = '';
-      errorDiv.textContent = '';
-      downloadLinks.innerHTML = '';
-      const data = Object.fromEntries(new FormData(form));
-      try {
-        const headers = { 'Content-Type': 'application/json' };
-        const apiKey = localStorage.getItem('openai_api_key');
-        if (apiKey) headers['x-openai-api-key'] = apiKey;
-        const res = await fetch('/migration_map', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          errorDiv.innerHTML = `<div class='alert alert-danger'>${json.error || 'Unknown error'}</div>`;
-          return;
-        }
-        resultDiv.innerHTML = '<h3>Migration Map Result (JSON):</h3>' +
-          '<pre class="bg-dark text-light p-3 rounded">' + JSON.stringify(json.results, null, 2) + '</pre>';
-        if (json.output) {
-          downloadLinks.innerHTML += `<a class="btn btn-success me-2" href="/${json.output}" download>Download JSON</a>`;
-        }
-        if (json.pdf) {
-          downloadLinks.innerHTML += `<a class="btn btn-warning" href="/${json.pdf}" download>Download PDF</a>`;
-        }
-        if (json.outputFiles && json.outputFiles.length > 0) {
-          let list = '<h5 class="mt-4">Output Folder Files:</h5><ul class="list-group mb-3">';
-          for (const file of json.outputFiles) {
-            list += `<li class="list-group-item"><a href="${file.url}" target="_blank">${file.name}</a></li>`;
-          }
-          list += '</ul>';
-          downloadLinks.innerHTML += list;
-        }
-      } catch (err) {
-        errorDiv.innerHTML = `<div class='alert alert-danger'>${err.message}</div>`;
-      }
-    };
-  </script>
 </body>
 
 </html>

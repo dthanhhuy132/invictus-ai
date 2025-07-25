@@ -7,10 +7,11 @@
     "migration-map": "./migration-map.js"
   },
   "scripts": {
-    "start": "node migration-map.js"
+    "start": "node migration-map-server.js"
   },
   "dependencies": {
     "body-parser": "^2.2.0",
+    "checklist-ai-gen": "file:checklist-ai-gen-1.0.0.tgz",
     "commander": "^11.0.0",
     "express": "^5.1.0",
     "openai": "^4.104.0",
