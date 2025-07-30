@@ -151,7 +151,7 @@ function analyzeDependencies(filePath, lang) {
 
 // --- Database analysis ---
 function extractSqlSchema(sqlContent) {
-  // Trích xuất bảng, cột, foreign key đơn giản từ file .sql
+  // Extract tables, columns, foreign keys from .sql file
   const tables = [];
   const tableRegex = /CREATE TABLE (\w+) \(([^;]+)\);/gims;
   let match;
@@ -199,7 +199,7 @@ async function analyzeGroupPrompt({
   from,
   to,
 }) {
-  // Gửi prompt cho AI với thông tin nhóm file, dependency, schema, query, ngôn ngữ nguồn/đích
+  // Send prompt to AI with group file info, dependencies, schema, queries, source/target language
   const prompt = `You are a system migration expert. The source system is written in ${from}. The target system must be in ${to}.
 
 Analyze the following group of files:
@@ -342,7 +342,7 @@ function buildAdjacencyList(dependencyGraph) {
   for (const node of dependencyGraph) {
     if (!adj[node.file]) adj[node.file] = new Set();
     for (const dep of node.dependencies) {
-      // Chỉ liên kết nếu dependency là file trong project
+      // Only link if dependency is a file in the project
       const depFile = dependencyGraph.find(
         (f) => f.file.endsWith(dep) || f.file === dep
       );
@@ -377,7 +377,7 @@ function findConnectedComponents(dependencyGraph) {
       groups.push(group);
     }
   }
-  // Thêm các file không có dependency nào (không nằm trong adj)
+  // Add files without any dependencies (not in adj)
   const allFiles = new Set(dependencyGraph.map((d) => d.file));
   for (const file of allFiles) {
     if (!adj[file]) groups.push([file]);

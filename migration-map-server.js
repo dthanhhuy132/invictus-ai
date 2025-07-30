@@ -10,11 +10,13 @@ const {
 
 // --- Config ---
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-if (!OPENAI_API_KEY) {
-  console.error("Please set your OPENAI_API_KEY environment variable.");
-  process.exit(1);
+let openai = null;
+
+if (OPENAI_API_KEY) {
+  openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+} else {
+  console.warn("Warning: OPENAI_API_KEY not set. Some features may not work.");
 }
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 // --- Language map for dependency analysis ---
 const EXT_LANG_MAP = {
@@ -171,6 +173,18 @@ async function analyzeGroupPrompt(
   { files, dependencies, dbSchema, dbQueries, from, to },
   openai
 ) {
+  // If OpenAI is not configured, return a basic response
+  if (!openai) {
+    return {
+      files,
+      migrationPlan:
+        "OpenAI API key not configured. Please set OPENAI_API_KEY environment variable for AI-powered analysis.",
+      suggestedTech: "Manual analysis required",
+      databaseSuggestion: "Manual analysis required",
+      note: "OpenAI integration not available",
+    };
+  }
+
   const prompt = `You are a system migration expert. The source system is written in ${from}. The target system must be in ${to}.
 \nAnalyze the following group of files:\n${files
     .map((f) => summarizeFile(f))
@@ -207,6 +221,11 @@ async function analyzeGroupPrompt(
 }
 
 async function analyzeGroupPromptWithRetry(group, openai, maxRetries = 3) {
+  // If OpenAI is not configured, return immediately
+  if (!openai) {
+    return await analyzeGroupPrompt(group, openai);
+  }
+
   let lastError;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -339,187 +358,59 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Route bước 2: QA Checklist (giao diện + API)
+// Route step 2: QA Checklist (interface + API)
 app.get("/qa_test", (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang='en'>
-    <head>
-      <meta charset='UTF-8'>
-      <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-      <title>Checklist AI Generator</title>
-      <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css' rel='stylesheet'>
-    </head>
-    <body class='bg-light'>
-      <div class='container py-5'>
-        <div class='row justify-content-center'>
-          <div class='col-lg-7 col-md-9'>
-            <div class='card shadow-sm'>
-              <div class='card-body'>
-                <div class='d-flex justify-content-between align-items-center mb-2'>
-                  <h1 class='card-title mb-0'>Checklist AI Generator</h1>
-                  <button class='btn btn-outline-secondary btn-sm' id='setApiKeyBtn'>Set API Key</button>
-                </div>
-                <form id='checklistForm'>
-                  <div class='mb-3'>
-                    <label class='form-label'>Source Directory (trên server):</label>
-                    <input type='text' name='srcDir' class='form-control' required placeholder='VD: example/src'>
-                  </div>
-                  <div class='mb-3'>
-                    <label class='form-label'>Checklist Language:</label>
-                    <select name='language' class='form-select'>
-                      <option value='vi'>Tiếng Việt</option>
-                      <option value='en'>English</option>
-                    </select>
-                  </div>
-                  <div class='mb-3'>
-                    <label class='form-label'>Output file name (.xlsx):</label>
-                    <input type='text' name='outputFile' class='form-control' value='manual-checklist.xlsx'>
-                  </div>
-                  <div class='form-check mb-3'>
-                    <input class='form-check-input' type='checkbox' value='1' id='generatePdf' name='generatePdf' checked>
-                    <label class='form-check-label' for='generatePdf'>Tạo file PDF checklist</label>
-                  </div>
-                  <div class='d-grid gap-2'>
-                    <button type='submit' class='btn btn-primary btn-lg'>Generate Checklist</button>
-                  </div>
-                </form>
-                <div class='result mt-4' id='result'></div>
-                <div class='error mt-3' id='error'></div>
-                <div class='progress mt-3' id='progressBarContainer' style='display:none; height:32px;'>
-                  <div class='progress-bar progress-bar-striped progress-bar-animated' role='progressbar' style='width: 100%; font-size: 1.1rem;' aria-valuenow='100' aria-valuemin='0' aria-valuemax='100'>Processing...</div>
-                </div>
-                <div class='row mt-4'>
-                  <div class='col-6 text-start'>
-                    <a href="/migration_map" class="btn btn-secondary">&larr; Back: Migration Map</a>
-                  </div>
-                  <div class='col-6 text-end'>
-                    <a href="/" class="btn btn-outline-primary">Trang chủ</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Modal for API Key -->
-      <div class='modal fade' id='apiKeyModal' tabindex='-1' aria-labelledby='apiKeyModalLabel' aria-hidden='true'>
-        <div class='modal-dialog'>
-          <div class='modal-content'>
-            <div class='modal-header'>
-              <h5 class='modal-title' id='apiKeyModalLabel'>Set OpenAI API Key</h5>
-              <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-            </div>
-            <div class='modal-body'>
-              <input type='password' id='apiKeyInput' class='form-control' placeholder='sk-...' autocomplete='off'>
-              <div class='form-text'>API key sẽ được lưu trên trình duyệt của bạn (localStorage).</div>
-            </div>
-            <div class='modal-footer'>
-              <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-              <button type='button' class='btn btn-primary' id='saveApiKeyBtn'>Save</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js'></script>
-      <script>
-        const form = document.getElementById('checklistForm');
-        const resultDiv = document.getElementById('result');
-        const errorDiv = document.getElementById('error');
-        const setApiKeyBtn = document.getElementById('setApiKeyBtn');
-        const apiKeyModal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const progressBarContainer = document.getElementById('progressBarContainer');
-        setApiKeyBtn.onclick = () => {
-          apiKeyInput.value = localStorage.getItem('openai_api_key') || '';
-          apiKeyModal.show();
-        };
-        saveApiKeyBtn.onclick = () => {
-          localStorage.setItem('openai_api_key', apiKeyInput.value.trim());
-          apiKeyModal.hide();
-        };
-        form.onsubmit = async (e) => {
-          e.preventDefault();
-          resultDiv.innerHTML = '';
-          errorDiv.textContent = '';
-          submitBtn.disabled = true;
-          progressBarContainer.style.display = 'block';
-          const data = Object.fromEntries(new FormData(form));
-          if (data.generatePdf) data.generatePdf = true; else data.generatePdf = false;
-          try {
-            const headers = { 'Content-Type': 'application/json' };
-            const apiKey = localStorage.getItem('openai_api_key');
-            if (apiKey) headers['x-openai-api-key'] = apiKey;
-            const res = await fetch('/generate_checklist', {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            if (!res.ok) {
-              errorDiv.innerHTML = "<div class='alert alert-danger'>" + (json.error || 'Unknown error') + "</div>";
-              resultDiv.innerHTML = '';
-              submitBtn.disabled = false;
-              progressBarContainer.style.display = 'none';
-              return;
-            }
-            let html = "<div class='alert alert-success'>Checklist generated! <a href='" + json.fileUrl + "' class='btn btn-success ms-2' download>Download Checklist (.xlsx)</a>";
-            if (json.pdfUrl) html += " <a href='" + json.pdfUrl + "' class='btn btn-warning ms-2' download>Download PDF</a>";
-            if (json.pdfUrl) html += " <button class='btn btn-outline-dark' id='viewPdfBtn'>Xem PDF</button>";
-            html += '</div>';
-            resultDiv.innerHTML = html;
-          } catch (err) {
-            errorDiv.innerHTML = "<div class='alert alert-danger'>" + err.message + "</div>";
-            resultDiv.innerHTML = '';
-          } finally {
-            submitBtn.disabled = false;
-            progressBarContainer.style.display = 'none';
-          }
-        };
-      </script>
-      <script>
-        // Logic mở modal xem PDF khi bấm nút
-        document.addEventListener('click', function(e) {
-          if (e.target && e.target.id === 'viewPdfBtn') {
-            // Lấy đúng href của nút Download PDF đầu tiên trong trang
-            var pdfLink = document.querySelector('a.btn-warning');
-            var pdfUrl = pdfLink ? pdfLink.getAttribute('href') : null;
-            if (pdfUrl) {
-              var pdfFrame = document.getElementById('pdfFrame');
-              if (pdfFrame) {
-                pdfFrame.src = '';
-                setTimeout(function() {
-                  pdfFrame.src = pdfUrl;
-                }, 50);
-                var pdfModal = new bootstrap.Modal(document.getElementById('pdfModal'));
-                pdfModal.show();
-              }
-            }
-          }
-        });
-      </script>
-      <!-- Modal xem PDF -->
-      <div class='modal fade' id='pdfModal' tabindex='-1' aria-labelledby='pdfModalLabel' aria-hidden='true'>
-        <div class='modal-dialog modal-xl modal-dialog-centered'>
-          <div class='modal-content'>
-            <div class='modal-header'>
-              <h5 class='modal-title' id='pdfModalLabel'>Xem file PDF</h5>
-              <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-            </div>
-            <div class='modal-body' style='height:80vh;'>
-              <iframe id='pdfFrame' src='' style='width:100%;height:100%;border:none;'></iframe>
-            </div>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
+  res.sendFile(path.join(__dirname, "public", "qa_test.html"));
 });
 
-// API sinh checklist bằng AI
+app.post("/qa_test", async (req, res) => {
+  try {
+    // Priority: get API key from header if available
+    const apiKeyFromHeader = req.headers["x-openai-api-key"];
+    const apiKey = apiKeyFromHeader || process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return res
+        .status(400)
+        .json({ error: "Missing OpenAI API key (header or env)" });
+    }
+
+    // Create OpenAI instance with corresponding key
+    const OpenAI = require("openai");
+    const openai = new OpenAI({ apiKey });
+
+    const { srcDir, testType, outputFormats, excel, pdf } = req.body;
+
+    if (!srcDir) {
+      return res.status(400).json({ error: "Missing source directory" });
+    }
+
+    if (!fs.existsSync(srcDir)) {
+      return res.status(400).json({ error: "Source directory does not exist" });
+    }
+
+    // Generate QA checklist using the checklist-ai-gen library
+    const result = await generateChecklistAI({
+      srcDir,
+      testType: testType || "all",
+      outputFormats: outputFormats || ["excel", "pdf"],
+      excel: excel || "example/result/qa-checklist.xlsx",
+      pdf: pdf || "example/result/qa-checklist.pdf",
+      openai,
+    });
+
+    res.json({
+      success: true,
+      message: "QA Checklist generated successfully",
+      excel: result.excel || null,
+      pdf: result.pdf || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API generate checklist with AI
 app.post("/generate_checklist", async (req, res) => {
   try {
     const apiKey = req.headers["x-openai-api-key"];
@@ -527,27 +418,68 @@ app.post("/generate_checklist", async (req, res) => {
     const {
       srcDir,
       outputFile = "manual-checklist.xlsx",
-      language = "vi",
+      language = "en",
       generatePdf,
     } = req.body;
     if (!srcDir) return res.status(400).json({ error: "Missing srcDir" });
     const resultDir = path.join(__dirname, "example", "result");
+    // Generate checklist with English headers
     const outPath = await generateChecklistAI({
       srcDir: path.isAbsolute(srcDir) ? srcDir : path.join(__dirname, srcDir),
       resultDir,
       outputFile,
       openaiApiKey: apiKey,
-      language,
+      language: "en", // Force English language
     });
+
+    // If the library still generates Vietnamese headers, we need to replace them
+    if (fs.existsSync(outPath)) {
+      const XLSX = require("xlsx");
+      const workbook = XLSX.readFile(outPath);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      // Convert to JSON to modify headers
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Replace Vietnamese headers with English ones
+      if (jsonData.length > 0) {
+        const headers = jsonData[0];
+        const englishHeaders = headers.map((header) => {
+          if (typeof header === "string") {
+            return header
+              .replace(/Mô tả/i, "Description")
+              .replace(/Bước thực hiện/i, "Steps")
+              .replace(/Kết quả mong đợi/i, "Expected Result")
+              .replace(/Ghi chú/i, "Notes")
+              .replace(/Tiêu đề/i, "Title")
+              .replace(/Tên/i, "Name")
+              .replace(/Trạng thái/i, "Status")
+              .replace(/Độ ưu tiên/i, "Priority");
+          }
+          return header;
+        });
+
+        jsonData[0] = englishHeaders;
+
+        // Create new workbook with English headers
+        const newWorkbook = XLSX.utils.book_new();
+        const newWorksheet = XLSX.utils.aoa_to_sheet(jsonData);
+        XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
+
+        // Write back to file
+        XLSX.writeFile(newWorkbook, outPath);
+      }
+    }
     let pdfUrl = null;
     if (generatePdf) {
-      // Đọc lại file xlsx, chuyển sang PDF
+      // Read the xlsx file and convert to PDF
       const XLSX = require("xlsx");
       const PdfPrinter = require("pdfmake");
       const wb = XLSX.readFile(outPath);
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      // Tạo PDF
+      // Create PDF
       const fonts = {
         Roboto: {
           normal: path.join(__dirname, "fonts", "Roboto-Regular.ttf"),
@@ -560,7 +492,7 @@ app.post("/generate_checklist", async (req, res) => {
       const docDefinition = {
         pageOrientation: "landscape",
         content: [
-          { text: "Checklist Manual Test", style: "header" },
+          { text: "QA Test Checklist", style: "header" },
           {
             table: {
               headerRows: 1,
@@ -596,7 +528,7 @@ app.get("/migration_map", (req, res) => {
 
 app.post("/migration_map", async (req, res) => {
   try {
-    // Ưu tiên lấy API key từ header nếu có
+    // Priority: get API key from header if available
     const apiKeyFromHeader = req.headers["x-openai-api-key"];
     const apiKey = apiKeyFromHeader || process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -604,7 +536,7 @@ app.post("/migration_map", async (req, res) => {
         .status(400)
         .json({ error: "Missing OpenAI API key (header or env)" });
     }
-    // Tạo OpenAI instance với key tương ứng
+    // Create OpenAI instance with corresponding key
     const OpenAI = require("openai");
     const openai = new OpenAI({ apiKey });
     const {
@@ -681,7 +613,7 @@ app.post("/migration_map", async (req, res) => {
     if (pdf) {
       exportToPDF(results, pdf);
     }
-    // Liệt kê file trong folder output
+    // List files in output folder
     const outputDir = path.dirname(output);
     let outputFiles = [];
     if (fs.existsSync(outputDir)) {

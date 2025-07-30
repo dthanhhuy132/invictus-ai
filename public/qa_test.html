@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Migration Map Web UI</title>
+  <title>QA Checklist Generator</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
@@ -130,44 +130,25 @@
         <div class="card main-card">
           <div class="card-body p-5">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <h1 class="card-title mb-0">Migration Map Generator</h1>
+              <h1 class="card-title mb-0">QA Checklist Generator</h1>
               <button class="btn btn-outline-secondary btn-sm" id="setApiKeyBtn">Set API Key</button>
             </div>
-            <form id="migrationForm">
+            <form id="qaForm">
               <div class="mb-3">
                 <label class="form-label">Source Directory (on server):</label>
-                <input type="text" name="sourceDir" class="form-control" required placeholder="e.g., example/src">
+                <input type="text" name="srcDir" class="form-control" required placeholder="e.g., example/src"
+                  id="srcDirInput">
               </div>
               <div class="mb-3">
-                <label class="form-label">Source Language:</label>
-                <select name="from" class="form-select">
-                  <option value="php">PHP</option>
-                  <option value="java">Java</option>
-                  <option value="python">Python</option>
-                  <option value="nodejs">Node.js</option>
-                  <option value="reactjs">ReactJS</option>
-                  <option value="csharp">C#</option>
-                  <option value="ruby">Ruby</option>
-                </select>
+                <label class="form-label">Output file name (.xlsx):</label>
+                <input type="text" name="outputFile" class="form-control" value="manual-checklist.xlsx">
               </div>
-              <div class="mb-3">
-                <label class="form-label">Target Language:</label>
-                <select name="to" class="form-select">
-                  <option value="nodejs">Node.js</option>
-                  <option value="reactjs">ReactJS</option>
-                  <option value="php">PHP</option>
-                  <option value="java">Java</option>
-                  <option value="python">Python</option>
-                  <option value="csharp">C#</option>
-                  <option value="ruby">Ruby</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Output PDF file (server path):</label>
-                <input type="text" name="pdf" class="form-control" value="example/result/migration-map.pdf">
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" value="1" id="generatePdf" name="generatePdf" checked>
+                <label class="form-check-label" for="generatePdf">Generate PDF checklist</label>
               </div>
               <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">Generate Migration Map</button>
+                <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">Generate QA Checklist</button>
               </div>
               <div class="progress mt-3" id="progressBarContainer" style="display:none; height:8px;">
                 <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
@@ -182,7 +163,7 @@
                 <a href="/" class="btn btn-secondary">&larr; Back</a>
               </div>
               <div class="col-6 text-end">
-                <a href="/qa_test" class="btn btn-success">Next: QA Checklist &rarr;</a>
+                <a href="/migration_map" class="btn btn-success">Previous: Migration Map &larr;</a>
               </div>
             </div>
           </div>
@@ -190,6 +171,7 @@
       </div>
     </div>
   </div>
+
   <!-- Modal for API Key -->
   <div class="modal fade" id="apiKeyModal" tabindex="-1" aria-labelledby="apiKeyModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -209,106 +191,7 @@
       </div>
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const form = document.getElementById('migrationForm');
-    const resultDiv = document.getElementById('result');
-    const errorDiv = document.getElementById('error');
-    const downloadLinks = document.getElementById('downloadLinks');
-    const setApiKeyBtn = document.getElementById('setApiKeyBtn');
-    const apiKeyModal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
-    const progressBarContainer = document.getElementById('progressBarContainer');
-    const generateBtn = document.getElementById('generateBtn');
 
-    // Load source directory from URL parameter or localStorage
-    document.addEventListener('DOMContentLoaded', function () {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sourceDirFromUrl = urlParams.get('sourceDir');
-      const sourceDirFromStorage = localStorage.getItem('source_directory');
-
-      const sourceDirInput = form.querySelector('input[name="sourceDir"]');
-      if (sourceDirFromUrl) {
-        sourceDirInput.value = sourceDirFromUrl;
-      } else if (sourceDirFromStorage) {
-        sourceDirInput.value = sourceDirFromStorage;
-      }
-
-      // Load saved form values
-      const savedFrom = localStorage.getItem('migration_map_from');
-      const savedTo = localStorage.getItem('migration_map_to');
-      const savedOutput = localStorage.getItem('migration_map_output');
-      const savedPdf = localStorage.getItem('migration_map_pdf');
-
-      if (savedFrom) form.querySelector('select[name="from"]').value = savedFrom;
-      if (savedTo) form.querySelector('select[name="to"]').value = savedTo;
-      if (savedOutput) form.querySelector('input[name="output"]').value = savedOutput;
-      if (savedPdf) form.querySelector('input[name="pdf"]').value = savedPdf;
-
-      // Restore previous result if exists
-      const migrationMapGenerated = localStorage.getItem('migration_map_generated');
-      const migrationMapPdfUrl = localStorage.getItem('migration_map_pdf_url');
-
-      if (migrationMapGenerated === 'true' && migrationMapPdfUrl) {
-        downloadLinks.innerHTML = '<div class="alert alert-success"><h5>✅ Migration Map Generated Successfully!</h5><p>Your migration map has been created and is ready for download.</p></div>';
-        downloadLinks.innerHTML += '<div class="d-flex gap-3 mt-3"><a class="btn btn-warning" href="' + migrationMapPdfUrl + '" download><i class="bi bi-file-earmark-pdf"></i> Download PDF</a><button class="btn btn-outline-dark" id="viewPdfBtn"><i class="bi bi-eye"></i> View PDF</button></div>';
-      }
-    });
-    setApiKeyBtn.onclick = () => {
-      apiKeyInput.value = localStorage.getItem('openai_api_key') || '';
-      apiKeyModal.show();
-    };
-    saveApiKeyBtn.onclick = () => {
-      localStorage.setItem('openai_api_key', apiKeyInput.value.trim());
-      apiKeyModal.hide();
-    };
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      resultDiv.innerHTML = '';
-      errorDiv.textContent = '';
-      downloadLinks.innerHTML = '';
-      progressBarContainer.style.display = 'block';
-      generateBtn.disabled = true;
-      const data = Object.fromEntries(new FormData(form));
-
-      // Save form values to localStorage
-      localStorage.setItem('migration_map_from', data.from);
-      localStorage.setItem('migration_map_to', data.to);
-      localStorage.setItem('migration_map_output', data.output);
-      localStorage.setItem('migration_map_pdf', data.pdf);
-
-      try {
-        const headers = { 'Content-Type': 'application/json' };
-        const apiKey = localStorage.getItem('openai_api_key');
-        if (apiKey) headers['x-openai-api-key'] = apiKey;
-        const res = await fetch('/migration_map', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(data)
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          errorDiv.innerHTML = "<div class='alert alert-danger'>" + (json.error || 'Unknown error') + "</div>";
-          return;
-        }
-        resultDiv.innerHTML = '';
-        if (json.pdf) {
-          downloadLinks.innerHTML = '<div class="alert alert-success"><h5>✅ Migration Map Generated Successfully!</h5><p>Your migration map has been created and is ready for download.</p></div>';
-          downloadLinks.innerHTML += '<div class="d-flex gap-3 mt-3"><a class="btn btn-warning" href="/' + json.pdf + '" download><i class="bi bi-file-earmark-pdf"></i> Download PDF</a><button class="btn btn-outline-dark" id="viewPdfBtn"><i class="bi bi-eye"></i> View PDF</button></div>';
-
-          // Save state to localStorage
-          localStorage.setItem('migration_map_pdf_url', '/' + json.pdf);
-          localStorage.setItem('migration_map_generated', 'true');
-        }
-      } catch (err) {
-        errorDiv.innerHTML = "<div class='alert alert-danger'>" + err.message + "</div>";
-      } finally {
-        progressBarContainer.style.display = 'none';
-        generateBtn.disabled = false;
-      }
-    };
-  </script>
   <!-- Modal to view PDF -->
   <div class="modal fade" id="pdfModal" tabindex="-1" aria-labelledby="pdfModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -323,8 +206,135 @@
       </div>
     </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Logic mở modal xem PDF khi bấm nút
+    const form = document.getElementById('qaForm');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    const downloadLinks = document.getElementById('downloadLinks');
+    const setApiKeyBtn = document.getElementById('setApiKeyBtn');
+    const apiKeyModal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+    const progressBarContainer = document.getElementById('progressBarContainer');
+    const generateBtn = document.getElementById('generateBtn');
+    const srcDirInput = document.getElementById('srcDirInput');
+
+    // Load source directory from URL parameter or localStorage
+    document.addEventListener('DOMContentLoaded', function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sourceDirFromUrl = urlParams.get('sourceDir');
+      const sourceDirFromStorage = localStorage.getItem('source_directory');
+
+      if (sourceDirFromUrl) {
+        srcDirInput.value = sourceDirFromUrl;
+      } else if (sourceDirFromStorage) {
+        srcDirInput.value = sourceDirFromStorage;
+      }
+
+      // Load saved form values
+      const savedOutputFile = localStorage.getItem('qa_test_output_file');
+      const savedGeneratePdf = localStorage.getItem('qa_test_generate_pdf');
+
+      if (savedOutputFile) form.querySelector('input[name="outputFile"]').value = savedOutputFile;
+      if (savedGeneratePdf) form.querySelector('input[name="generatePdf"]').checked = savedGeneratePdf === 'true';
+
+      // Restore previous result if exists
+      const qaTestGenerated = localStorage.getItem('qa_test_generated');
+      const qaTestFileUrl = localStorage.getItem('qa_test_file_url');
+      const qaTestPdfUrl = localStorage.getItem('qa_test_pdf_url');
+
+      if (qaTestGenerated === 'true') {
+        downloadLinks.innerHTML = '<div class="alert alert-success"><h5>✅ QA Checklist Generated Successfully!</h5><p>Your QA checklist has been created and is ready for download.</p></div>';
+
+        let downloadButtons = '<div class="d-flex gap-2 mt-3">';
+        if (qaTestFileUrl) {
+          downloadButtons += '<a class="btn btn-success" href="' + qaTestFileUrl + '" download><i class="bi bi-file-earmark-excel"></i> Download Excel</a>';
+        }
+        if (qaTestPdfUrl) {
+          downloadButtons += '<a class="btn btn-warning" href="' + qaTestPdfUrl + '" download><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>';
+          downloadButtons += '<button class="btn btn-outline-dark" id="viewPdfBtn"><i class="bi bi-eye"></i> View PDF</button>';
+        }
+        downloadButtons += '</div>';
+        downloadLinks.innerHTML += downloadButtons;
+      }
+    });
+
+    setApiKeyBtn.onclick = () => {
+      apiKeyInput.value = localStorage.getItem('openai_api_key') || '';
+      apiKeyModal.show();
+    };
+
+    saveApiKeyBtn.onclick = () => {
+      localStorage.setItem('openai_api_key', apiKeyInput.value.trim());
+      apiKeyModal.hide();
+    };
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      resultDiv.innerHTML = '';
+      errorDiv.textContent = '';
+      downloadLinks.innerHTML = '';
+      progressBarContainer.style.display = 'block';
+      generateBtn.disabled = true;
+
+      const formData = new FormData(form);
+      const data = {
+        srcDir: formData.get('srcDir'),
+        outputFile: formData.get('outputFile'),
+        generatePdf: formData.get('generatePdf') === '1'
+      };
+
+      // Save form values to localStorage
+      localStorage.setItem('qa_test_output_file', data.outputFile);
+      localStorage.setItem('qa_test_generate_pdf', data.generatePdf.toString());
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        const apiKey = localStorage.getItem('openai_api_key');
+        if (apiKey) headers['x-openai-api-key'] = apiKey;
+
+        const res = await fetch('/generate_checklist', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          errorDiv.innerHTML = "<div class='alert alert-danger'>" + (json.error || 'Unknown error') + "</div>";
+          return;
+        }
+
+        resultDiv.innerHTML = '';
+        downloadLinks.innerHTML = '<div class="alert alert-success"><h5>✅ QA Checklist Generated Successfully!</h5><p>Your QA checklist has been created and is ready for download.</p></div>';
+
+        let downloadButtons = '<div class="d-flex gap-2 mt-3">';
+        if (json.fileUrl) {
+          downloadButtons += '<a class="btn btn-success" href="' + json.fileUrl + '" download><i class="bi bi-file-earmark-excel"></i> Download Excel</a>';
+        }
+        if (json.pdfUrl) {
+          downloadButtons += '<a class="btn btn-warning" href="' + json.pdfUrl + '" download><i class="bi bi-file-earmark-pdf"></i> Download PDF</a>';
+          downloadButtons += '<button class="btn btn-outline-dark" id="viewPdfBtn"><i class="bi bi-eye"></i> View PDF</button>';
+        }
+        downloadButtons += '</div>';
+        downloadLinks.innerHTML += downloadButtons;
+
+        // Save result to localStorage
+        localStorage.setItem('qa_test_generated', 'true');
+        if (json.fileUrl) localStorage.setItem('qa_test_file_url', json.fileUrl);
+        if (json.pdfUrl) localStorage.setItem('qa_test_pdf_url', json.pdfUrl);
+
+      } catch (err) {
+        errorDiv.innerHTML = "<div class='alert alert-danger'>" + err.message + "</div>";
+      } finally {
+        progressBarContainer.style.display = 'none';
+        generateBtn.disabled = false;
+      }
+    };
+
+    // Logic to open PDF modal when clicking the button
     document.addEventListener('click', function (e) {
       if (e.target && e.target.id === 'viewPdfBtn') {
         const pdfUrl = document.querySelector('a.btn-warning')?.getAttribute('href');
