@@ -1,113 +1,160 @@
 # AI Migration Map & Checklist
 
-## Giới thiệu
+## Overview
 
-**AI Migration Map & Checklist** là bộ công cụ web hỗ trợ:
+**AI Migration Map & Checklist** is a web-based tool that supports:
 
-- Phân tích, lập kế hoạch chuyển đổi (migration) dự án giữa các ngôn ngữ (PHP, Node.js, Java, Python, C#, Ruby, ...)
-- Sinh checklist/manual test case kiểm thử tự động bằng AI (OpenAI GPT-3.5/4)
-- Review kết quả migration và checklist trực tiếp trên web (PDF viewer)
+- Analyzing and planning migrations between different programming languages (PHP, Node.js, Java, Python, C#, Ruby, etc.)
+- Generating automated test checklists using AI (OpenAI GPT-3.5/4)
+- Reviewing migration results and checklists directly on the web (PDF viewer)
 
-## Tính năng nổi bật
+## Key Features
 
-- Phân tích tự động dependency graph, nhóm module, phát hiện schema/truy vấn SQL
-- Đề xuất công nghệ hiện đại ở ngôn ngữ đích (ORM, GraphQL, NoSQL, ...)
-- Sinh checklist kiểm thử UI/integration tự động, xuất file .xlsx và .pdf
-- Giao diện web hiện đại, dễ dùng, xem kết quả PDF trực tiếp không cần tải về
+- Automatic dependency graph analysis, module grouping, SQL schema/query detection
+- Modern technology recommendations for target languages (ORM, GraphQL, NoSQL, etc.)
+- Automated UI/integration test checklist generation with .xlsx and .pdf export
+- Modern web interface with direct PDF viewing capability
 
-## Hướng dẫn sử dụng
+## Setup & Usage
 
-### 1. Cài đặt
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Thiết lập OpenAI API Key
-
-- **PowerShell:**
-  ```powershell
-  $env:OPENAI_API_KEY="your_openai_api_key"
-  ```
-- **CMD:**
-  ```cmd
-  set OPENAI_API_KEY=your_openai_api_key
-  ```
-
-### 3. Chạy ứng dụng
+### 2. Set OpenAI API Key (optional - can be set in frontend)
 
 ```bash
+# PowerShell
+$env:OPENAI_API_KEY="your_openai_api_key"
+
+# CMD
+set OPENAI_API_KEY=your_openai_api_key
+```
+
+### 3. Run the application
+
+```bash
+npm start
+# or
 node migration-map-server.js
 ```
 
-Mặc định chạy ở http://localhost:3000
+Default: http://localhost:3000
 
-### 4. Sử dụng giao diện web
+### 4. Use the web interface
 
-#### Trang chủ
+- **Home Page** (`/`): Overview and navigation
+- **Migration Map** (`/migration_map`): Generate migration plans between languages
+- **QA Test Checklist** (`/qa_test`): Generate automated test checklists
 
-Truy cập [http://localhost:3000/](http://localhost:3000/)
+## Features
 
-![Trang chủ](docs/screenshot-home.png)
+- **Migration Map**: Analyzes source code, generates migration plans, and exports to JSON/PDF
+- **QA Test Checklist**: Creates comprehensive test checklists with AI assistance
+- **Modern UI**: 100% English interface with responsive design
+- **State Persistence**: Form inputs and results are saved in browser localStorage
+- **Direct PDF Viewing**: Review results without downloading files
 
-Chọn:
+## Migration Workflow
 
-- **Bước 1: Migration Map** (`/migration_map`)
-- **Bước 2: Checklist AI Test** (`/qa_test`)
+### Home Page
 
-#### Bước 1: Migration Map (`/migration_map`)
+Access [http://localhost:3000/](http://localhost:3000/)
 
-![Migration Map](docs/screenshot-migration-map.png)
+Choose:
 
-- Nhập đường dẫn source code (trên server, ví dụ: `example/src`)
-- Chọn ngôn ngữ nguồn và ngôn ngữ đích
-- Đặt tên file output JSON, PDF (có thể giữ mặc định)
-- Nhấn **Set API Key** để nhập OpenAI API key (lưu trên trình duyệt)
-- Nhấn **Generate Migration Map**
-- Sau khi chạy xong:
-  - Có thể **Download JSON** hoặc **Download PDF**
-  - Nhấn **Xem PDF** để review migration plan trực tiếp trên web (PDF sẽ mở trong modal)
+- **Migration Map** (`/migration_map`)
+- **QA Test Checklist** (`/qa_test`)
 
-#### Bước 2: Checklist AI Test (`/qa_test`)
+### Migration Map (`/migration_map`)
 
-![Checklist AI Test](docs/screenshot-qa-test.png)
+- Enter source code path (on server, e.g., `example/src`)
+- Select source and target languages
+- Set output file names for JSON and PDF (can keep defaults)
+- Click **Set API Key** to enter OpenAI API key (saved in browser)
+- Click **Generate Migration Map**
+- After completion:
+  - **Download JSON** or **Download PDF**
+  - Click **View PDF** to review migration plan directly on web (PDF opens in modal)
 
-- Nhập đường dẫn source code (trên server, ví dụ: `example/src`)
-- Chọn ngôn ngữ checklist (Tiếng Việt/English)
-- Đặt tên file output (mặc định: `manual-checklist.xlsx`)
-- Checkbox “Tạo file PDF checklist” luôn được tick sẵn
-- Nhấn **Set API Key** để nhập OpenAI API key (lưu trên trình duyệt)
-- Nhấn **Generate Checklist**
-- Sau khi chạy xong:
-  - Có thể **Download Checklist (.xlsx)** hoặc **Download PDF**
-  - Nhấn **Xem PDF** để review checklist trực tiếp trên web (PDF sẽ mở trong modal)
+### QA Test Checklist (`/qa_test`)
 
-### 5. Lưu ý
+- Enter source code path (on server, e.g., `example/src`)
+- Set output file name (default: `manual-checklist.xlsx`)
+- Checkbox "Generate PDF checklist" is pre-ticked
+- Click **Set API Key** to enter OpenAI API key (saved in browser)
+- Click **Generate Checklist**
+- After completion:
+  - **Download Checklist (.xlsx)** or **Download PDF**
+  - Click **View PDF** to review checklist directly on web (PDF opens in modal)
 
-- Đường dẫn source code là đường dẫn trên server (máy chạy Node.js)
-- API key chỉ lưu trên trình duyệt, bảo mật
-- Nếu mã nguồn lớn, nên chia nhỏ để AI xử lý tốt hơn
-- Nếu thiếu package, cài thêm bằng `npm install <tên-package>`
+## Project Structure
 
-## Kết quả xuất ra
+```
+invictus-ai/
+├── public/                    # Web interface files
+│   ├── index.html            # Home page
+│   ├── migration_map.html    # Migration map interface
+│   └── qa_test.html          # QA test interface
+├── fonts/                    # Font files for PDF generation
+│   ├── Roboto-Bold.ttf      # Bold font
+│   └── Roboto-Regular.ttf   # Regular font
+├── example/                  # Example projects (excluded from main structure)
+├── migration-map-server.js   # Express.js backend server
+├── migration-map.js          # Core migration logic
+├── dependency-graph.js       # Dependency analysis utilities
+├── package.json              # Node.js dependencies
+├── package-lock.json         # Locked dependencies
+├── checklist-ai-gen-1.0.0.tgz # AI checklist generation package
+└── README.md                 # This file
+```
 
-- **JSON**: Chi tiết migration plan, dependency, gợi ý công nghệ, ... (dùng cho automation/dev)
-- **PDF**: Trình bày rõ ràng từng nhóm file/module, migration plan, checklist kiểm thử, ... (dễ review, trình bày)
+## Output Examples
 
-## Ví dụ kết quả (PDF/JSON)
+### Migration Map Results
 
-| Files                                            | Migration Plan                                                             | Suggested Tech        | Database Suggestion    | Note                                |
-| ------------------------------------------------ | -------------------------------------------------------------------------- | --------------------- | ---------------------- | ----------------------------------- |
-| UserController.php, PaymentService.php, User.php | Refactor thành các module Node.js, dùng ORM Sequelize, chuyển SQL sang ORM | Sequelize, ES6 module | PostgreSQL/MySQL + ORM | Lưu ý async/await, khác biệt syntax |
-| config.php                                       | Chuyển sang JSON config, dùng package 'config'                             | config (Node.js)      | ORM cho DB             | Lưu ý khác biệt cấu hình            |
-| schema.sql                                       | Chuyển schema sang model ORM                                               | Sequelize/Knex.js     | PostgreSQL/MySQL       | Lưu ý mapping type                  |
+- **JSON**: Detailed migration plan, dependencies, technology suggestions (for automation/development)
+- **PDF**: Clear presentation of file/module groups, migration plans, test checklists (for review and presentation)
 
-## Đóng góp & liên hệ
+### Example Results (PDF/JSON)
 
-- Nếu có vấn đề, góp ý, hoặc muốn mở rộng tool cho ngôn ngữ khác, hãy liên hệ hoặc tạo issue trên repo!
+| Files                                            | Migration Plan                                                       | Suggested Tech        | Database Suggestion    | Note                                 |
+| ------------------------------------------------ | -------------------------------------------------------------------- | --------------------- | ---------------------- | ------------------------------------ |
+| UserController.php, PaymentService.php, User.php | Refactor into Node.js modules, use Sequelize ORM, convert SQL to ORM | Sequelize, ES6 module | PostgreSQL/MySQL + ORM | Note async/await, syntax differences |
+| config.php                                       | Convert to JSON config, use 'config' package                         | config (Node.js)      | ORM for DB             | Note configuration differences       |
+| schema.sql                                       | Convert schema to ORM models                                         | Sequelize/Knex.js     | PostgreSQL/MySQL       | Note type mapping                    |
+
+## Technology Stack
+
+- **Backend**: Node.js, Express.js
+- **Frontend**: HTML, CSS, JavaScript, Bootstrap
+- **AI**: OpenAI GPT-3.5/4 API
+- **File Processing**: Multer, PDF generation
+
+## Dependencies
+
+- **express**: Web server framework
+- **openai**: OpenAI API client
+- **pdfmake**: PDF generation library
+- **body-parser**: Request body parsing
+- **commander**: CLI argument parsing
+- **checklist-ai-gen**: AI-powered checklist generation
+
+## Contributing
+
+- Report issues or suggest improvements by creating issues on the repository
+- For feature requests or language support extensions, please contact the maintainers
+- All contributions are welcome!
+
+## Notes
+
+- Source code paths should be relative to the server running the Node.js application
+- API keys are stored securely in the browser (localStorage)
+- For large codebases, consider breaking them into smaller chunks for better AI processing
+- Install missing packages using `npm install <package-name>` if needed
 
 ---
 
-> **Lưu ý:**
->
-> - Các ảnh minh họa (screenshot) để trong thư mục `docs/`. Nếu chưa có, hãy chụp màn hình giao diện và lưu vào `docs/screenshot-home.png`, `docs/screenshot-migration-map.png`, `docs/screenshot-qa-test.png` để README hiển thị đẹp nhất.
+> **Note**: Screenshots should be placed in the `docs/` directory. If not available, take screenshots of the interface and save them as `docs/screenshot-home.png`, `docs/screenshot-migration-map.png`, and `docs/screenshot-qa-test.png` for optimal README display.
